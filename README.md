@@ -1,6 +1,6 @@
-# (TODO: your game's title)
+# (TODO: your game's title) Pollen Maze(?)
 
-Author: (TODO: your name)
+Author: Nellie Tonev
 
 Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
 

@@ -15,6 +15,17 @@ struct PlayMode : Mode {
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
+    //asset pipeline helper functions & types
+    /* used to index into the palette table with more human-readable values */
+    enum PaletteTableIndex : size_t {
+        GroundPalette = 0,
+        MazeLitPalette = 1,
+        MazeUnlitPalette = 2,
+        PlayerPalette = 3,
+    };
+
+    private: PPU466::Tile generate_tile_from_png(std::string const &suffix, PaletteTableIndex paletteTableIndex);
+
 	//----- game state -----
 
 	//input tracking:
@@ -23,13 +34,9 @@ struct PlayMode : Mode {
 		uint8_t pressed = 0;
 	} left, right, down, up;
 
-	//some weird background animation:
-	float background_fade = 0.0f;
-
 	//player position:
 	glm::vec2 player_at = glm::vec2(0.0f);
 
 	//----- drawing handled by PPU466 -----
-
 	PPU466 ppu;
 };
