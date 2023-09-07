@@ -1,4 +1,4 @@
-# (TODO: your game's title) Pollen Maze(?)
+# (TODO: your game's title) Pollen Maze(?), Bee A-Maze-d
 
 Author: Nellie Tonev
 

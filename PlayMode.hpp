@@ -24,8 +24,6 @@ struct PlayMode : Mode {
         PlayerPalette = 3,
     };
 
-    private: PPU466::Tile generate_tile_from_png(std::string const &suffix, PaletteTableIndex paletteTableIndex);
-
 	//----- game state -----
 
 	//input tracking:
