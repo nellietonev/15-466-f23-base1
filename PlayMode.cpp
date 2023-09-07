@@ -39,16 +39,16 @@ void PlayMode::draw_quadrant(uint8_t quadrant) {
             size_t quadrant_pixel = (i * quadrant_width) + j;
             size_t background_pixel = start_idxs[quadrant] + (i * PPU466::BackgroundWidth) + j;
 
-            auto has_maze_tile_Up = [&quadrant, &quadrant_pixel, this]() {
+            auto has_maze_tile_Up = [this, &quadrant, &quadrant_pixel]() {
                 return quadrant_chunks[quadrant][quadrant_pixel - quadrant_width] == '1';
             };
-            auto has_maze_tile_Down = [&quadrant, &quadrant_pixel, this]() {
+            auto has_maze_tile_Down = [this, &quadrant, &quadrant_pixel]() {
                 return quadrant_chunks[quadrant][quadrant_pixel + quadrant_width] == '1';
             };
-            auto has_maze_tile_Left = [&quadrant, &quadrant_pixel, this]() {
+            auto has_maze_tile_Left = [this, &quadrant, &quadrant_pixel]() {
                 return quadrant_chunks[quadrant][quadrant_pixel - 1] == '1';
             };
-            auto has_maze_tile_Right = [&quadrant, &quadrant_pixel, this]() {
+            auto has_maze_tile_Right = [this, &quadrant, &quadrant_pixel]() {
                 return quadrant_chunks[quadrant][quadrant_pixel + 1] == '1';
             };
 
@@ -151,6 +151,10 @@ PlayMode::PlayMode() {
 
             PPU466::Tile ground_tile = generate_tile_from_data(ground_data, ppu.palette_table[GroundPalette]);
             ppu.tile_table[0] = ground_tile;
+
+            for (size_t i = 0; i < ppu.background.size(); i++) {
+                ppu.background[i] = 0 | GroundPalette << 8;
+            }
         }
 
         {/* 8 distinct tiles for all the maze edges
@@ -186,27 +190,6 @@ PlayMode::PlayMode() {
 
         /* Draw each quadrant, initially unlit */
         for (uint8_t i = 0; i < 4; i++) draw_quadrant(i);
-
-        // TODO: delete this test
-//        ppu.background[start_idxs[0]] = 7 | MazeUnlitPalette << 8;
-//        ppu.background[start_idxs[1]] = 8 | MazeUnlitPalette << 8;
-//        ppu.background[start_idxs[2]] = 9 | MazeUnlitPalette << 8;
-//        ppu.background[start_idxs[3]] = 4 | MazeUnlitPalette << 8;
-//        ppu.background[129] = 7 | MazeUnlitPalette << 8;
-//        ppu.background[130] = 8 | MazeUnlitPalette << 8;
-//        ppu.background[131] = 9 | MazeUnlitPalette << 8;
-//        ppu.background[193] = 4 | MazeUnlitPalette << 8;
-//        ppu.background[195] = 6 | MazeUnlitPalette << 8;
-//        ppu.background[257] = 1 | MazeUnlitPalette << 8;
-//        ppu.background[258] = 2 | MazeUnlitPalette << 8;
-//        ppu.background[259] = 3 | MazeUnlitPalette << 8;
-
-        for (size_t i = 0; i < ppu.background.size(); i++) {
-            // ppu.background[i] |= PlayerPalette << 8;
-            // keep this in mind for the other tiles in the background later
-        }
-
-
     }
 
     { /* Player Sprite */
@@ -222,6 +205,7 @@ PlayMode::PlayMode() {
         ppu.sprites[32].index = 32;
         ppu.sprites[32].attributes = PlayerPalette;
     }
+
 
     { /* Other Sprites */
         //use sprite 12 as a "light":
@@ -250,8 +234,6 @@ PlayMode::~PlayMode() {
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-    // TODO: Add an interaction key and a quitting key
-
     if (evt.type == SDL_KEYDOWN) {
         if (evt.key.keysym.sym == SDLK_LEFT) {
             left.downs += 1;
@@ -269,7 +251,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
             down.downs += 1;
             down.pressed = true;
             return true;
+        } else if (evt.key.keysym.sym == SDLK_e) {
+            E.downs += 1;
+            E.pressed = true;
+            return true;
+        } else if (evt.key.keysym.sym == SDLK_q) {
+            Q.downs += 1;
+            Q.pressed = true;
+            return true;
         }
+
     } else if (evt.type == SDL_KEYUP) {
         if (evt.key.keysym.sym == SDLK_LEFT) {
             left.pressed = false;
@@ -283,22 +274,80 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         } else if (evt.key.keysym.sym == SDLK_DOWN) {
             down.pressed = false;
             return true;
+        } else if (evt.key.keysym.sym == SDLK_e) {
+            E.pressed = false;
+            return true;
+        } else if (evt.key.keysym.sym == SDLK_q) {
+            Q.pressed = false;
+            return true;
         }
     }
 
     return false;
 }
 
+
 void PlayMode::update(float elapsed) {
-    // TODO: check the interaction key and update variables / game state
     constexpr float PlayerSpeed = 30.0f;
     constexpr float PlayerSize = 8.0f;
-    constexpr float margin = 16.0f;
+    constexpr float map_margin = 16.0f;
+    constexpr float obj_margin = 8.0f;
     float distAttempted = PlayerSpeed * elapsed;
-    if (left.pressed) player_at.x = std::max(player_at.x - distAttempted, margin);
-    if (right.pressed) player_at.x = std::min(player_at.x + distAttempted, PPU466::ScreenWidth - margin - PlayerSize);
-    if (down.pressed) player_at.y = std::max(player_at.y - distAttempted, margin + 1); // so bee doesn't touch the ground
-    if (up.pressed) player_at.y = std::min(player_at.y + distAttempted, PPU466::ScreenHeight - margin - PlayerSize);
+//    float new_x = player_at.x;
+//    float new_y = player_at.y;
+
+    auto objects_overlap = []
+            (float obj1_x, float obj1_y, float obj1_size, float obj2_x, float obj2_y, float obj2_size, float obj_margin){
+        return ((obj1_x >= obj2_x - obj_margin && obj1_x <= obj2_x + obj2_size + obj_margin)
+                || (obj1_x + obj1_size >= obj2_x - obj_margin && obj1_x + obj1_size <= obj2_x + obj2_size + obj_margin))
+               && ((obj1_y >= obj2_y - obj_margin && obj1_y <= obj2_y + obj2_size + obj_margin)
+                   || (obj1_y + obj1_size >= obj2_x - obj_margin && obj1_y + obj1_size <= obj2_y + obj2_size + obj_margin));
+    };
+
+    if (left.pressed) player_at.x = std::max(player_at.x - distAttempted, map_margin);
+    if (right.pressed) player_at.x = std::min(player_at.x + distAttempted, PPU466::ScreenWidth - map_margin - PlayerSize);
+    if (down.pressed) player_at.y = std::max(player_at.y - distAttempted, map_margin + 1); // so bee doesn't touch the ground
+    if (up.pressed) player_at.y = std::min(player_at.y + distAttempted, PPU466::ScreenHeight - map_margin - PlayerSize);
+
+    // TODO: figure out the collider issues and then comment this back in
+//    auto player_overlapping_collider = [this, &objects_overlap, &new_x, &new_y](){
+//        /* Check collision with background maze tiles */
+//        for (size_t i = 0; i < ppu.BackgroundHeight; i++) {
+//            for (size_t j = 0; j < ppu.BackgroundWidth; j++) {
+//                size_t current_pixel_x = j * 8;
+//                size_t current_pixel_y = i * 8;
+//                size_t current_tile_idx = (i * ppu.BackgroundWidth) + j;
+//                if (((ppu.background[current_tile_idx] & 0b11111111) > 0 && (ppu.background[current_tile_idx] & 0b11111111) < 10)
+//                  && objects_overlap(new_x, new_y, PlayerSize, (float)current_pixel_x, (float)current_pixel_y, 8, 1.0f)) {
+//                    std::cout << "Hitting the collider at pixel (" << current_pixel_x << ", " << current_pixel_y << ")\n";
+//                    std::cout << "current pixel index is" << current_tile_idx;
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    };
+//
+//    if (!player_overlapping_collider()) {
+//        player_at.x = new_x;
+//        player_at.y = new_y;
+//    }
+
+    /* handle interactions with sprite objects */
+    if (E.pressed) {
+        for (size_t i = 0; i < 4; i++) { /* check all the light objects */
+            uint8_t current_light_x = ppu.sprites[i].x;
+            uint8_t current_light_y = ppu.sprites[i].y;
+            if (objects_overlap(player_at.x, player_at.y, PlayerSize, current_light_x, current_light_y, 8, obj_margin)) {
+                illuminate_quadrant(i);
+
+                //TODO: make the corresponding flower objects visible
+            }
+        }
+    }
+
+    /* quit game */
+    if (Q.pressed) PlayMode::set_current(nullptr);
 
     //reset button press counters:
     left.downs = 0;

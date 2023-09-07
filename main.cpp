@@ -16,8 +16,6 @@
 //Includes for libSDL:
 #include <SDL.h>
 
-#include "asset_pipeline.hpp" //TODO: delete
-
 //...and for c++ standard library functions:
 #include <chrono>
 #include <iostream>
@@ -65,9 +63,9 @@ int main(int argc, char **argv) {
 
 	//create window:
 	SDL_Window *window = SDL_CreateWindow(
-		"gp21 game1: remember to change your title", //TODO: remember to set a title for your game!
+		"gp23 game1: The A-Maze-ing Bee",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		2*PPU466::ScreenWidth + 8, 2*PPU466::ScreenHeight + 8, //TODO: modify window size if you'd like
+		2*PPU466::ScreenWidth + 8, 2*PPU466::ScreenHeight + 8,
 		SDL_WINDOW_OPENGL
 		| SDL_WINDOW_RESIZABLE //uncomment to allow resizing
 		| SDL_WINDOW_ALLOW_HIGHDPI //uncomment for full resolution on high-DPI screens
@@ -106,7 +104,6 @@ int main(int argc, char **argv) {
 
 	//------------ load assets --------------
 	call_load_functions();
-    // generate_level_layout_binary(); //TODO: delete
 
 	//------------ create game mode + make current --------------
 	Mode::set_current(std::make_shared< PlayMode >());

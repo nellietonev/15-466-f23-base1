@@ -36,6 +36,11 @@ std::vector< PPU466::Tile > generate_tiles_from_spritesheet(std::vector<glm::u8v
                                                             PPU466::Palette palette);
 
 /*
- * TODO: fill this out
+ * This function is run as part of the authoring process, not during runtime.
+ *
+ * Takes a level layout png image (transparent png with black pixels corresponding to a tile on the background)
+ * and then processes it into 4 chunks of chars (for 4 quadrants of the background, which are relevant to the geme mechanic of illuminating
+ * the maze, quadrants at a time). In the chunks, '1' indicates there is a maze wall at that location on screen, while
+ * '0' means there is just ground. Chunks are stored in `dist/assets/level-layout.bin`
  */
 void generate_level_layout_binary();
