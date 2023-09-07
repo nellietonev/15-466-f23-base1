@@ -85,6 +85,8 @@ let copies = [
 	maek.COPY(`assets/ground.png`, `dist/assets/ground.png`),
 	maek.COPY(`assets/maze-tiles.png`, `dist/assets/maze-tiles.png`),
 	maek.COPY(`assets/palette_table_data.png`, `dist/assets/palette_table_data.png`),
+	maek.COPY(`assets/level-layout.png`, `dist/assets/level-layout.png`),
+	maek.COPY(`assets/light.png`, `dist/assets/light.png`),
 ];
 if (maek.OS === 'windows') {
 	copies.push( maek.COPY(`${NEST_LIBS}/SDL2/dist/SDL2.dll`, `dist/SDL2.dll`) );

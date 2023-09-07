@@ -16,6 +16,8 @@
 //Includes for libSDL:
 #include <SDL.h>
 
+#include "asset_pipeline.hpp" //TODO: delete
+
 //...and for c++ standard library functions:
 #include <chrono>
 #include <iostream>
@@ -104,11 +106,12 @@ int main(int argc, char **argv) {
 
 	//------------ load assets --------------
 	call_load_functions();
+    // generate_level_layout_binary(); //TODO: delete
 
 	//------------ create game mode + make current --------------
 	Mode::set_current(std::make_shared< PlayMode >());
 
-	//------------ main loop ------------
+    //------------ main loop ------------
 
 	//this inline function will be called whenever the window is resized,
 	// and will update the window_size and drawable_size variables:
