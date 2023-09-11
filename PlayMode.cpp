@@ -293,45 +293,64 @@ void PlayMode::update(float elapsed) {
     constexpr float map_margin = 16.0f;
     constexpr float obj_margin = 8.0f;
     float distAttempted = PlayerSpeed * elapsed;
-//    float new_x = player_at.x;
-//    float new_y = player_at.y;
+    float new_x = player_at.x;
+    float new_y = player_at.y;
+
+	// TODO: maybe make this a nicer looking function using Jim's advice from office hours, like the following:
+//	{
+//		float obj1_min_x = obj1_x - obj_margin;
+//		float obj1_max_x = obj1_x + obj1_size + obj_margin;
+//		float obj2_min_x = obj2_x - obj_margin;
+//		float obj2_max_x = obj2_x + obj2_size + obj_margin;
+//
+//		float obj1_min_y = obj1_y - obj_margin;
+//		float obj1_max_y = obj1_y + obj1_size + obj_margin;
+//		float obj2_min_y = obj2_y - obj_margin;
+//		float obj2_max_y = obj2_y + obj2_size + obj_margin;
+//
+//		if (obj1_max_x < obj2_min_x) return false;
+//		if (obj2_max_x < obj1_min_x) return false;
+//		if (obj1_max_y < obj2_min_y) return false;
+//		if (obj2_max_y < obj2_min_y) return false;
+//
+//		return true;
+//	}
 
     auto objects_overlap = []
             (float obj1_x, float obj1_y, float obj1_size, float obj2_x, float obj2_y, float obj2_size, float obj_margin){
         return ((obj1_x >= obj2_x - obj_margin && obj1_x <= obj2_x + obj2_size + obj_margin)
                 || (obj1_x + obj1_size >= obj2_x - obj_margin && obj1_x + obj1_size <= obj2_x + obj2_size + obj_margin))
-               && ((obj1_y >= obj2_y - obj_margin && obj1_y <= obj2_y + obj2_size + obj_margin)
-                   || (obj1_y + obj1_size >= obj2_x - obj_margin && obj1_y + obj1_size <= obj2_y + obj2_size + obj_margin));
+            && ((obj1_y >= obj2_y - obj_margin && obj1_y <= obj2_y + obj2_size + obj_margin)
+                || (obj1_y + obj1_size >= obj2_y - obj_margin && obj1_y + obj1_size <= obj2_y + obj2_size + obj_margin));
     };
 
-    if (left.pressed) player_at.x = std::max(player_at.x - distAttempted, map_margin);
-    if (right.pressed) player_at.x = std::min(player_at.x + distAttempted, PPU466::ScreenWidth - map_margin - PlayerSize);
-    if (down.pressed) player_at.y = std::max(player_at.y - distAttempted, map_margin + 1); // so bee doesn't touch the ground
-    if (up.pressed) player_at.y = std::min(player_at.y + distAttempted, PPU466::ScreenHeight - map_margin - PlayerSize);
+    if (left.pressed) new_x = std::max(player_at.x - distAttempted, map_margin);
+    if (right.pressed) new_x = std::min(player_at.x + distAttempted, PPU466::ScreenWidth - map_margin - PlayerSize);
+    if (down.pressed) new_y = std::max(player_at.y - distAttempted, map_margin + 1); // so bee doesn't touch the ground
+    if (up.pressed) new_y = std::min(player_at.y + distAttempted, PPU466::ScreenHeight - map_margin - PlayerSize);
 
-    // TODO: figure out the collider issues and then comment this back in
-//    auto player_overlapping_collider = [this, &objects_overlap, &new_x, &new_y](){
-//        /* Check collision with background maze tiles */
-//        for (size_t i = 0; i < ppu.BackgroundHeight; i++) {
-//            for (size_t j = 0; j < ppu.BackgroundWidth; j++) {
-//                size_t current_pixel_x = j * 8;
-//                size_t current_pixel_y = i * 8;
-//                size_t current_tile_idx = (i * ppu.BackgroundWidth) + j;
-//                if (((ppu.background[current_tile_idx] & 0b11111111) > 0 && (ppu.background[current_tile_idx] & 0b11111111) < 10)
-//                  && objects_overlap(new_x, new_y, PlayerSize, (float)current_pixel_x, (float)current_pixel_y, 8, 1.0f)) {
-//                    std::cout << "Hitting the collider at pixel (" << current_pixel_x << ", " << current_pixel_y << ")\n";
-//                    std::cout << "current pixel index is" << current_tile_idx;
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    };
-//
-//    if (!player_overlapping_collider()) {
-//        player_at.x = new_x;
-//        player_at.y = new_y;
-//    }
+    auto player_overlapping_collider = [this, &objects_overlap, &new_x, &new_y](){
+        /* Check collision with background maze tiles */
+        for (size_t i = 0; i < ppu.BackgroundHeight; i++) {
+            for (size_t j = 0; j < ppu.BackgroundWidth; j++) {
+                size_t current_pixel_x = j * 8;
+                size_t current_pixel_y = i * 8;
+                size_t current_tile_idx = (i * ppu.BackgroundWidth) + j;
+                if (((ppu.background[current_tile_idx] & 0b11111111) > 0 && (ppu.background[current_tile_idx] & 0b11111111) < 10)
+                  && objects_overlap(new_x, new_y, PlayerSize, (float)current_pixel_x, (float)current_pixel_y, 8, 1.0f)) {
+                    std::cout << "Hitting the collider at pixel (" << current_pixel_x << ", " << current_pixel_y << ")\n";
+                    std::cout << "current pixel index is" << current_tile_idx;
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    if (!player_overlapping_collider()) {
+        player_at.x = new_x;
+        player_at.y = new_y;
+    }
 
     /* handle interactions with sprite objects */
     if (E.pressed) {
