@@ -41,10 +41,6 @@ If I had more time to implement the game mechanics, the illumination step would 
 that quadrant. Then, you would be able to interact with the flowers and move pollen from one to another. Additionally, I would like for
 the light objects to only reveal themselves to the player when you move closer to them, so it's not extremely obvious exactly where you need to go right from the start.
 
-You may also notice while playing this game that the maze walls have no colliders on them, so you can fly right through them. 
-As of the point of submitting this assignment, I am still dealing with some very confusing bugs related to my collision system. So, to have some kind of
-an actual working game to submit, I have just commented out all collision logic for now.
-
 Thanks for playing :)
 
 \
